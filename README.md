@@ -37,3 +37,19 @@ This path is gonna be passed to the agent so that it can read all the certificat
 ```bash
 yarn start
 ```
+
+## Systemd Installation
+
+Run the `install.sh` script to install the agent as systemd service. See `./install.sh -h` for more informations.
+
+```bash
+sudo ./install.sh OPTIONS
+```
+
+## Uninstall systemd service
+
+To purge the service from the host machine:
+```bash
+sudo ./install.sh --uninstall
+rm -rf <installation-path> # this path was provided during the installation phase, see the help page of the script to know the default path
+```
