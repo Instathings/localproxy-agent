@@ -1,0 +1,20 @@
+{
+    "compilerOptions": {
+        "target": "ES2017",
+        "module": "commonjs",
+        "lib": ["ESNEXT", "DOM", "ES2018.Promise"],
+        "allowJs": true,
+        "declaration": true,
+        "outDir": "./build",
+        "strict": true,
+        "noImplicitAny": false,
+        "strictNullChecks": false,
+        "sourceMap": false,
+        "strictFunctionTypes": false,
+        "noUnusedLocals": false,
+        "esModuleInterop": true,
+        "forceConsistentCasingInFileNames": true
+    },
+    "include": ["./src/**/*"],
+    "exclude": ["node_modules"]
+}

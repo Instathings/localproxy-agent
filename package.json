@@ -1,0 +1,19 @@
+{
+  "name": "localproxy-agent",
+  "version": "1.0.0",
+  "main": "build/index.js",
+  "license": "MIT",
+  "dependencies": {
+    "aws-iot-device-sdk": "^2.2.12"
+  },
+  "scripts": {
+    "build": "tsc",
+    "start": "yarn build && yarn run-dist",
+    "run-dist": "node build"
+  },
+  "devDependencies": {
+    "@types/aws-iot-device-sdk": "^2.2.4",
+    "@types/node": "^18.7.14",
+    "typescript": "^4.8.2"
+  }
+}
