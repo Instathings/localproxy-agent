@@ -29,7 +29,6 @@ function usage() {
 }
 
 function parseArgv() {
-    echo "parsing args..."
     while true; do
         case "$1" in
             --broker-host | -b) BROKER_HOST="$2"; shift 2; ;;
@@ -48,7 +47,6 @@ function parseArgv() {
 }
 
 function validateFlags() {
-    echo "validating args..."
     if [ -z "$BROKER_HOST" ]; then echo "env BROKER_HOST is missing"; usage 1; fi
     if [ -z "$CERTS_PATH" ]; then echo "env CERTS_PATH is missing"; usage 1; fi
     if [ -z "$CLIENT_ID" ]; then echo "env CLIENT_ID is missing"; usage 1; fi
@@ -60,21 +58,26 @@ function applySystemdReplacements() {
     echo "customizing systemd file..."
     local file="$1"
     cp localproxy-agent.service "$file"
-    sed -i "s/\${{BROKER_HOST}}/${BROKER_HOST}/g" "$file"
-    sed -i "s/\${{CERTS_PATH}}/$CERTS_PATH/g" "$file"
-    sed -i "s/\${{CLIENT_ID}}/$CLIENT_ID/g" "$file"
-    sed -i "s/\${{REGION}}/$REGION/g" "$file"
-    sed -i "s/\${{DEVICE_NAME}}/$DEVICE_NAME/g" "$file"
-    sed -i "s/\${{USER}}/$user/g" "$file"
+    sed -i "s|\${{BROKER_HOST}}|${BROKER_HOST}|g" "$file"
+    sed -i "s|\${{CERTS_PATH}}|$CERTS_PATH|g" "$file"
+    sed -i "s|\${{CLIENT_ID}}|$CLIENT_ID|g" "$file"
+    sed -i "s|\${{REGION}}|$REGION|g" "$file"
+    sed -i "s|\${{DEVICE_NAME}}|$DEVICE_NAME|g" "$file"
+    sed -i "s|\${{USER}}|$user|g" "$file"
+    sed -i "s|\${{INSTALLATION_PATH}}|$INSTALLATION_PATH|g" "$file"
 }
 
 function uninstallSystemdService() {
     echo "uninstalling systemd service..."
+    if [ -z "$service_filename" ]; then echo "service file name is empty"; exit 1; fi
     systemctl stop "$service_filename"
     systemctl disable "$service_filename"
-    rm "/etc/systemd/system/$service_filename*"
-    rm "/usr/lib/systemd/system/$service_filename*"
+    rm -rf "/etc/systemd/system/$service_filename"* 2>/dev/null
+    rm -rf "/usr/lib/systemd/system/$service_filename"* 2>/dev/null
     systemctl daemon-reload
+    rm -rf "$INSTALLATION_PATH"
+    removeBuildContainer "localproxy-agent"
+    docker rmi -f "localproxy-agent"
     echo "service successfully uninstalled"
 }
 
@@ -82,18 +85,41 @@ function installSystemdService() {
     echo "installing systemd service"
     local temp="/tmp/copy.service"
     applySystemdReplacements "$temp"
-    cp "$temp" "/etc/systemd/system/$service_filename"
+    cp -f "$temp" "/etc/systemd/system/$service_filename"
     rm "$temp"
     systemctl enable "$service_filename"
     systemctl start "$service_filename"
 }
 
+function removeBuildContainer() {
+    local container="$1"
+    docker stop "$container"
+    docker rm -f "$container"
+}
+
+function installSource() {
+    rm -rf "$INSTALLATION_PATH"
+    mkdir -p "$INSTALLATION_PATH"
+    local image="localproxy-agent"
+    docker build --no-cache -t "$image" .
+    container_id="$(docker run -d "$image" sleep infinity)"
+    sleep 3
+    docker cp "$container_id:/app/build" "$INSTALLATION_PATH/build"
+    docker cp "$container_id:/app/package.json" "$INSTALLATION_PATH/package.json"
+    docker cp "$container_id:/app/node_modules" "$INSTALLATION_PATH/node_modules"
+    # chown after node modules installation
+    chown -R "$user" "$INSTALLATION_PATH"
+    chmod u+rwx "$INSTALLATION_PATH"
+    removeBuildContainer "$container_id"
+}
+
 function main() {
     parseArgv $@
-    validateFlags
     if [ `id -u` -ne 0 ]; then echo "must run as root"; exit 1; fi
     uninstallSystemdService
     if [ $UNINSTALL_MODE -eq 1 ]; then exit; fi
+    validateFlags
+    installSource
     installSystemdService
 }
 
