@@ -88,3 +88,25 @@ class AwsLocalProxySpawner {
         }
     }
 }
+
+function main() {
+    try {
+        const {BROKER_HOST, CERTS_PATH, CLIENT_ID, REGION, DEVICE_NAME} = process.env as any;
+        if (!BROKER_HOST) throw Error("BROKER_HOST env missing");
+        if (!CERTS_PATH) throw Error("CERTS_PATH env missing");
+        if (!CLIENT_ID) throw Error("CLIENT_ID env missing");
+        if (!REGION) throw Error("REGION env missing");
+        if (!DEVICE_NAME) throw Error("DEVICE_NAME env missing");
+        new AwsLocalProxySpawner({
+            brokerHost: BROKER_HOST,
+            certsPath: CERTS_PATH,
+            clientId: CLIENT_ID,
+            region: REGION,
+            deviceName: DEVICE_NAME,
+        }).start()
+    } catch (e) {
+        console.error(e)
+    }
+}
+
+main()
