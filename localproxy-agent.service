@@ -10,7 +10,10 @@ RestartSec=1
 User=${{USER}}
 ExecStart=/bin/bash -c "node build"
 Environment=BROKER_HOST=${{BROKER_HOST}}
-Environment=CERTS_PATH=${{CERTS_PATH}}
+Environment=PRIVKEY_FILE=${{PRIVKEY_FILE}}
+Environment=PUBKEY_FILE=${{PUBKEY_FILE}}
+Environment=CA_FILE=${{CA_FILE}}
+Environment=CERT_FILE=${{CERT_FILE}}
 Environment=CLIENT_ID=${{CLIENT_ID}}
 Environment=REGION=${{REGION}}
 Environment=DEVICE_NAME=${{DEVICE_NAME}}

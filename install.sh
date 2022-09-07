@@ -1,9 +1,14 @@
 # args for current script
 export BROKER_HOST=""
-export CERTS_PATH=""
 export CLIENT_ID=""
 export REGION=""
 export DEVICE_NAME=""
+#certs
+export PRIVKEY_FILE=""
+export PUBKEY_FILE=""
+export CA_FILE=""
+export CERT_FILE=""
+
 user="$USER"
 INSTALLATION_PATH="/opt/localproxy-agent"
 UNINSTALL_MODE=0
@@ -14,17 +19,21 @@ service_filename="localproxy-agent.service"
 function usage() {
     local code=0
     if [ ! -z "$1" ]; then code=$1; fi
-    echo -e "$0 OPTIONS\n"
+    echo "$0 OPTIONS"
     echo "OPTIONS"
-    echo -e "    --broker-host, -b\thostname of the aws broker"
-    echo -e "    --certs-dir, -d\tpath to the directory containing the certs"
-    echo -e "    --client-id, -c\tclient id for mqtt connection"
-    echo -e "    --region, -r\taws region (such as eu-west-1)"
-    echo -e "    --device-name, -n\tname of the iot core thing created in aws"
-    echo -e "    --help, -h\tdisplay this help message"
-    echo -e "    --install-path, -p\t(default: /opt/localproxy-agent) the installation folder where the agent source code will be installed"
-    echo -e "    --user, -u\t\t(default: root) the linux user of the device to use to run the systemd service"
-    echo -e "    --uninstall, -U\t\tuninstall mode, uninstalls the service and related files"
+    echo "    --broker-host, -b         hostname of the aws broker"
+    echo "    --client-id, -i           client id for mqtt connection"
+    echo "    --region, -r              aws region (such as eu-west-1)"
+    echo "    --key-file, -k            path to the private key file"
+    echo "    --pubkey-file, -P         path to the public key file"
+    echo "    --ca-file, -c             path to the root ca file"
+    echo "    --cert-file, -C           path to the cert file"
+    echo "    --device-name, -n         name of the iot core thing created in aws"
+    echo "    --help, -h                display this help message"
+    echo "    --install-path, -p        (default: /opt/localproxy-agent) the installation folder where the agent source code will be installed"
+    echo "    --user, -u                (default: root) the linux user of the device to use to run the systemd service"
+    echo "    --uninstall, -U           uninstall mode, uninstalls the service and related files"
+    echo
     exit $code
 }
 
@@ -32,9 +41,12 @@ function parseArgv() {
     while true; do
         case "$1" in
             --broker-host | -b) BROKER_HOST="$2"; shift 2; ;;
-            --certs-dir | -d) CERTS_PATH="$2"; shift 2; ;;
-            --client-id | -c) CLIENT_ID="$2"; shift 2; ;;
+            --client-id | -i) CLIENT_ID="$2"; shift 2; ;;
             --region | -r) REGION="$2"; shift 2; ;;
+            --key-file | -k) PRIVKEY_FILE="$2"; shift 2; ;;
+            --pubkey-file | -P) PUBKEY_FILE="$2"; shift 2; ;;
+            --ca-file | -c) CA_FILE="$2"; shift 2; ;;
+            --cert-file | -C) CERT_FILE="$2"; shift 2; ;;
             --device-name | -n) DEVICE_NAME="$2"; shift 2; ;;
             --help | -h) usage; ;;
             --install-path | -p) INSTALLATION_PATH="$2"; shift 2; ;;
@@ -47,11 +59,15 @@ function parseArgv() {
 }
 
 function validateFlags() {
-    if [ -z "$BROKER_HOST" ]; then echo "env BROKER_HOST is missing"; usage 1; fi
-    if [ -z "$CERTS_PATH" ]; then echo "env CERTS_PATH is missing"; usage 1; fi
-    if [ -z "$CLIENT_ID" ]; then echo "env CLIENT_ID is missing"; usage 1; fi
-    if [ -z "$REGION" ]; then echo "env REGION is missing"; usage 1; fi
-    if [ -z "$DEVICE_NAME" ]; then echo "env DEVICE_NAME is missing"; usage 1; fi
+    if [ $UNINSTALL_MODE -eq 1 ]; then return; fi
+    if [ -z "$BROKER_HOST" ]; then echo "option BROKER_HOST is missing"; usage 1; fi
+    if [ -z "$CLIENT_ID" ]; then echo "option CLIENT_ID is missing"; usage 1; fi
+    if [ -z "$REGION" ]; then echo "option REGION is missing"; usage 1; fi
+    if [ -z "$DEVICE_NAME" ]; then echo "option DEVICE_NAME is missing"; usage 1; fi
+    if [ -z "$PRIVKEY_FILE" ]; then echo "option PRIVKEY_FILE is missing"; usage 1; fi
+    if [ -z "$PUBKEY_FILE" ]; then echo "option PUBKEY_FILE is missing"; usage 1; fi
+    if [ -z "$CA_FILE" ]; then echo "option CA_FILE is missing"; usage 1; fi
+    if [ -z "$CERT_FILE" ]; then echo "option CERT_FILE is missing"; usage 1; fi
 }
 
 function applySystemdReplacements() {
@@ -59,9 +75,12 @@ function applySystemdReplacements() {
     local file="$1"
     cp localproxy-agent.service "$file"
     sed -i "s|\${{BROKER_HOST}}|${BROKER_HOST}|g" "$file"
-    sed -i "s|\${{CERTS_PATH}}|$CERTS_PATH|g" "$file"
     sed -i "s|\${{CLIENT_ID}}|$CLIENT_ID|g" "$file"
     sed -i "s|\${{REGION}}|$REGION|g" "$file"
+    sed -i "s|\${{PRIVKEY_FILE}}|$PRIVKEY_FILE|g" "$file"
+    sed -i "s|\${{PUBKEY_FILE}}|$PUBKEY_FILE|g" "$file"
+    sed -i "s|\${{CA_FILE}}|$CA_FILE|g" "$file"
+    sed -i "s|\${{CERT_FILE}}|$CERT_FILE|g" "$file"
     sed -i "s|\${{DEVICE_NAME}}|$DEVICE_NAME|g" "$file"
     sed -i "s|\${{USER}}|$user|g" "$file"
     sed -i "s|\${{INSTALLATION_PATH}}|$INSTALLATION_PATH|g" "$file"
@@ -76,8 +95,7 @@ function uninstallSystemdService() {
     rm -rf "/usr/lib/systemd/system/$service_filename"* 2>/dev/null
     systemctl daemon-reload
     rm -rf "$INSTALLATION_PATH"
-    removeBuildContainer "localproxy-agent"
-    docker rmi -f "localproxy-agent"
+    docker rmi -f "localproxy-agent" 2>/dev/null
     echo "service successfully uninstalled"
 }
 
@@ -86,7 +104,7 @@ function installSystemdService() {
     local temp="/tmp/copy.service"
     applySystemdReplacements "$temp"
     cp -f "$temp" "/etc/systemd/system/$service_filename"
-    rm "$temp"
+    # rm "$temp"
     systemctl enable "$service_filename"
     systemctl start "$service_filename"
 }
@@ -110,15 +128,15 @@ function installSource() {
     # chown after node modules installation
     chown -R "$user" "$INSTALLATION_PATH"
     chmod u+rwx "$INSTALLATION_PATH"
-    removeBuildContainer "$container_id"
+    removeBuildContainer "$container_id" 2>/dev/null
 }
 
 function main() {
     parseArgv $@
+    validateFlags
     if [ `id -u` -ne 0 ]; then echo "must run as root"; exit 1; fi
     uninstallSystemdService
     if [ $UNINSTALL_MODE -eq 1 ]; then exit; fi
-    validateFlags
     installSource
     installSystemdService
 }

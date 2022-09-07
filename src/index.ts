@@ -3,7 +3,10 @@ import { ChildProcessWithoutNullStreams, spawn } from 'child_process';
 
 interface AwsLocalProxyConf {
     deviceName: string;
-    certsPath: string;
+    privKeyFile: string;
+    pubKeyFile: string;
+    certFile: string;
+    caFile: string;
     clientId: string;
     region: string;
     brokerHost: string;
@@ -27,9 +30,9 @@ class AwsLocalProxySpawner {
         this.opts = opts;
         this.device = new aws.device({
             host: opts.brokerHost,
-            keyPath: `${opts.certsPath}/${opts.deviceName}.private.key`,
-            certPath: `${opts.certsPath}/${opts.deviceName}.cert.pem`,
-            caPath: `${opts.certsPath}/root-CA.crt`,
+            keyPath: opts.privKeyFile,
+            certPath: opts.certFile,
+            caPath: opts.caFile,
             clientId: opts.clientId,
             region: opts.region
         })
@@ -91,15 +94,21 @@ class AwsLocalProxySpawner {
 
 function main() {
     try {
-        const {BROKER_HOST, CERTS_PATH, CLIENT_ID, REGION, DEVICE_NAME} = process.env as any;
+        const {BROKER_HOST, PRIVKEY_FILE, PUBKEY_FILE, CA_FILE, CERT_FILE, CLIENT_ID, REGION, DEVICE_NAME} = process.env as any;
         if (!BROKER_HOST) throw Error("BROKER_HOST env missing");
-        if (!CERTS_PATH) throw Error("CERTS_PATH env missing");
+        if (!PRIVKEY_FILE) throw Error("PRIVKEY_FILE env missing")
+        if (!PUBKEY_FILE) throw Error("PUBKEY_FILE env missing")
+        if (!CA_FILE) throw Error("CA_FILE env missing")
+        if (!CERT_FILE) throw Error("CERT_FILE env missing")
         if (!CLIENT_ID) throw Error("CLIENT_ID env missing");
         if (!REGION) throw Error("REGION env missing");
         if (!DEVICE_NAME) throw Error("DEVICE_NAME env missing");
         new AwsLocalProxySpawner({
             brokerHost: BROKER_HOST,
-            certsPath: CERTS_PATH,
+            caFile: CA_FILE,
+            certFile: CERT_FILE,
+            privKeyFile: PRIVKEY_FILE,
+            pubKeyFile: PUBKEY_FILE,
             clientId: CLIENT_ID,
             region: REGION,
             deviceName: DEVICE_NAME,
