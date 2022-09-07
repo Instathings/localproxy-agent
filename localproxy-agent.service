@@ -16,7 +16,6 @@ Environment=CA_FILE=${{CA_FILE}}
 Environment=CERT_FILE=${{CERT_FILE}}
 Environment=CLIENT_ID=${{CLIENT_ID}}
 Environment=REGION=${{REGION}}
-Environment=DEVICE_NAME=${{DEVICE_NAME}}
 
 
 [Install]

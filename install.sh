@@ -2,7 +2,6 @@
 export BROKER_HOST=""
 export CLIENT_ID=""
 export REGION=""
-export DEVICE_NAME=""
 #certs
 export PRIVKEY_FILE=""
 export PUBKEY_FILE=""
@@ -28,7 +27,6 @@ function usage() {
     echo "    --pubkey-file, -P         path to the public key file"
     echo "    --ca-file, -c             path to the root ca file"
     echo "    --cert-file, -C           path to the cert file"
-    echo "    --device-name, -n         name of the iot core thing created in aws"
     echo "    --help, -h                display this help message"
     echo "    --install-path, -p        (default: /opt/localproxy-agent) the installation folder where the agent source code will be installed"
     echo "    --user, -u                (default: root) the linux user of the device to use to run the systemd service"
@@ -47,7 +45,6 @@ function parseArgv() {
             --pubkey-file | -P) PUBKEY_FILE="$2"; shift 2; ;;
             --ca-file | -c) CA_FILE="$2"; shift 2; ;;
             --cert-file | -C) CERT_FILE="$2"; shift 2; ;;
-            --device-name | -n) DEVICE_NAME="$2"; shift 2; ;;
             --help | -h) usage; ;;
             --install-path | -p) INSTALLATION_PATH="$2"; shift 2; ;;
             --user | -u) user="$2"; shift 2; ;;
@@ -63,7 +60,6 @@ function validateFlags() {
     if [ -z "$BROKER_HOST" ]; then echo "option BROKER_HOST is missing"; usage 1; fi
     if [ -z "$CLIENT_ID" ]; then echo "option CLIENT_ID is missing"; usage 1; fi
     if [ -z "$REGION" ]; then echo "option REGION is missing"; usage 1; fi
-    if [ -z "$DEVICE_NAME" ]; then echo "option DEVICE_NAME is missing"; usage 1; fi
     if [ -z "$PRIVKEY_FILE" ]; then echo "option PRIVKEY_FILE is missing"; usage 1; fi
     if [ -z "$PUBKEY_FILE" ]; then echo "option PUBKEY_FILE is missing"; usage 1; fi
     if [ -z "$CA_FILE" ]; then echo "option CA_FILE is missing"; usage 1; fi
@@ -81,7 +77,6 @@ function applySystemdReplacements() {
     sed -i "s|\${{PUBKEY_FILE}}|$PUBKEY_FILE|g" "$file"
     sed -i "s|\${{CA_FILE}}|$CA_FILE|g" "$file"
     sed -i "s|\${{CERT_FILE}}|$CERT_FILE|g" "$file"
-    sed -i "s|\${{DEVICE_NAME}}|$DEVICE_NAME|g" "$file"
     sed -i "s|\${{USER}}|$user|g" "$file"
     sed -i "s|\${{INSTALLATION_PATH}}|$INSTALLATION_PATH|g" "$file"
 }

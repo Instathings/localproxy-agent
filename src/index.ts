@@ -2,7 +2,6 @@ import aws from 'aws-iot-device-sdk';
 import { ChildProcessWithoutNullStreams, spawn } from 'child_process';
 
 interface AwsLocalProxyConf {
-    deviceName: string;
     privKeyFile: string;
     pubKeyFile: string;
     certFile: string;
@@ -53,7 +52,7 @@ class AwsLocalProxySpawner {
     protected onConnected() {
         console.log("handler class connected to remote broker")
         if (this._init) return
-        const topic = `$aws/things/${this.opts.deviceName}/tunnels/notify`
+        const topic = `$aws/things/${this.opts.clientId}/tunnels/notify`
         this.device.subscribe(topic, { qos: 0 })
         this.device.on('message', this.messageHandler.bind(this));
         this._init = true;
@@ -94,7 +93,7 @@ class AwsLocalProxySpawner {
 
 function main() {
     try {
-        const {BROKER_HOST, PRIVKEY_FILE, PUBKEY_FILE, CA_FILE, CERT_FILE, CLIENT_ID, REGION, DEVICE_NAME} = process.env as any;
+        const {BROKER_HOST, PRIVKEY_FILE, PUBKEY_FILE, CA_FILE, CERT_FILE, CLIENT_ID, REGION} = process.env as any;
         if (!BROKER_HOST) throw Error("BROKER_HOST env missing");
         if (!PRIVKEY_FILE) throw Error("PRIVKEY_FILE env missing")
         if (!PUBKEY_FILE) throw Error("PUBKEY_FILE env missing")
@@ -102,7 +101,6 @@ function main() {
         if (!CERT_FILE) throw Error("CERT_FILE env missing")
         if (!CLIENT_ID) throw Error("CLIENT_ID env missing");
         if (!REGION) throw Error("REGION env missing");
-        if (!DEVICE_NAME) throw Error("DEVICE_NAME env missing");
         new AwsLocalProxySpawner({
             brokerHost: BROKER_HOST,
             caFile: CA_FILE,
@@ -110,8 +108,7 @@ function main() {
             privKeyFile: PRIVKEY_FILE,
             pubKeyFile: PUBKEY_FILE,
             clientId: CLIENT_ID,
-            region: REGION,
-            deviceName: DEVICE_NAME,
+            region: REGION
         }).start()
     } catch (e) {
         console.error(e)
