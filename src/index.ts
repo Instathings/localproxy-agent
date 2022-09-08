@@ -52,7 +52,8 @@ class AwsLocalProxySpawner {
     protected onConnected() {
         console.log("handler class connected to remote broker")
         if (this._init) return
-        const topic = `$aws/things/${this.opts.clientId}/tunnels/notify`
+        const replaced = this.opts.clientId.replace(/-agent$/, "");
+        const topic = `$aws/things/${replaced}/tunnels/notify`
         this.device.subscribe(topic, { qos: 0 })
         this.device.on('message', this.messageHandler.bind(this));
         this._init = true;
