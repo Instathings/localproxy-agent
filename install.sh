@@ -1,6 +1,6 @@
 # args for current script
 export BROKER_HOST=""
-export CLIENT_ID=""
+export CLIENT_NAME=""
 export REGION=""
 #certs
 export PRIVKEY_FILE=""
@@ -21,7 +21,7 @@ function usage() {
     echo "$0 OPTIONS"
     echo "OPTIONS"
     echo "    --broker-host, -b         hostname of the aws broker"
-    echo "    --client-id, -i           client id for mqtt connection"
+    echo "    --client-name, -d         device name e.g. <env>-<device-id>"
     echo "    --region, -r              aws region (such as eu-west-1)"
     echo "    --key-file, -k            path to the private key file"
     echo "    --pubkey-file, -P         path to the public key file"
@@ -39,7 +39,7 @@ function parseArgv() {
     while true; do
         case "$1" in
             --broker-host | -b) BROKER_HOST="$2"; shift 2; ;;
-            --client-id | -i) CLIENT_ID="$2"; shift 2; ;;
+            --client-name | -i) CLIENT_NAME="$2"; shift 2; ;;
             --region | -r) REGION="$2"; shift 2; ;;
             --key-file | -k) PRIVKEY_FILE="$2"; shift 2; ;;
             --pubkey-file | -P) PUBKEY_FILE="$2"; shift 2; ;;
@@ -58,7 +58,7 @@ function parseArgv() {
 function validateFlags() {
     if [ $UNINSTALL_MODE -eq 1 ]; then return; fi
     if [ -z "$BROKER_HOST" ]; then echo "option BROKER_HOST is missing"; usage 1; fi
-    if [ -z "$CLIENT_ID" ]; then echo "option CLIENT_ID is missing"; usage 1; fi
+    if [ -z "$CLIENT_NAME" ]; then echo "option CLIENT_NAME is missing"; usage 1; fi
     if [ -z "$REGION" ]; then echo "option REGION is missing"; usage 1; fi
     if [ -z "$PRIVKEY_FILE" ]; then echo "option PRIVKEY_FILE is missing"; usage 1; fi
     if [ -z "$PUBKEY_FILE" ]; then echo "option PUBKEY_FILE is missing"; usage 1; fi
@@ -71,7 +71,7 @@ function applySystemdReplacements() {
     local file="$1"
     cp localproxy-agent.service "$file"
     sed -i "s|\${{BROKER_HOST}}|${BROKER_HOST}|g" "$file"
-    sed -i "s|\${{CLIENT_ID}}|$CLIENT_ID|g" "$file"
+    sed -i "s|\${{CLIENT_NAME}}|$CLIENT_NAME|g" "$file"
     sed -i "s|\${{REGION}}|$REGION|g" "$file"
     sed -i "s|\${{PRIVKEY_FILE}}|$PRIVKEY_FILE|g" "$file"
     sed -i "s|\${{PUBKEY_FILE}}|$PUBKEY_FILE|g" "$file"

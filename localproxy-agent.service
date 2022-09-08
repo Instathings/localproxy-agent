@@ -14,7 +14,7 @@ Environment=PRIVKEY_FILE=${{PRIVKEY_FILE}}
 Environment=PUBKEY_FILE=${{PUBKEY_FILE}}
 Environment=CA_FILE=${{CA_FILE}}
 Environment=CERT_FILE=${{CERT_FILE}}
-Environment=CLIENT_ID=${{CLIENT_ID}}
+Environment=CLIENT_NAME=${{CLIENT_NAME}}
 Environment=REGION=${{REGION}}
 
 

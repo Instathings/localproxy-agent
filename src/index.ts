@@ -32,7 +32,7 @@ class AwsLocalProxySpawner {
             keyPath: opts.privKeyFile,
             certPath: opts.certFile,
             caPath: opts.caFile,
-            clientId: opts.clientId,
+            clientId: `${opts.clientId}-agent`,
             region: opts.region
         })
         if (autostart) this.start()
@@ -52,8 +52,7 @@ class AwsLocalProxySpawner {
     protected onConnected() {
         console.log("handler class connected to remote broker")
         if (this._init) return
-        const replaced = this.opts.clientId.replace(/-agent$/, "");
-        const topic = `$aws/things/${replaced}/tunnels/notify`
+        const topic = `$aws/things/${this.opts.clientId}/tunnels/notify`
         this.device.subscribe(topic, { qos: 0 })
         this.device.on('message', this.messageHandler.bind(this));
         this._init = true;
@@ -94,13 +93,13 @@ class AwsLocalProxySpawner {
 
 function main() {
     try {
-        const {BROKER_HOST, PRIVKEY_FILE, PUBKEY_FILE, CA_FILE, CERT_FILE, CLIENT_ID, REGION} = process.env as any;
+        const {BROKER_HOST, PRIVKEY_FILE, PUBKEY_FILE, CA_FILE, CERT_FILE, CLIENT_NAME, REGION} = process.env as any;
         if (!BROKER_HOST) throw Error("BROKER_HOST env missing");
         if (!PRIVKEY_FILE) throw Error("PRIVKEY_FILE env missing")
         if (!PUBKEY_FILE) throw Error("PUBKEY_FILE env missing")
         if (!CA_FILE) throw Error("CA_FILE env missing")
         if (!CERT_FILE) throw Error("CERT_FILE env missing")
-        if (!CLIENT_ID) throw Error("CLIENT_ID env missing");
+        if (!CLIENT_NAME) throw Error("CLIENT_NAME env missing");
         if (!REGION) throw Error("REGION env missing");
         new AwsLocalProxySpawner({
             brokerHost: BROKER_HOST,
@@ -108,7 +107,7 @@ function main() {
             certFile: CERT_FILE,
             privKeyFile: PRIVKEY_FILE,
             pubKeyFile: PUBKEY_FILE,
-            clientId: CLIENT_ID,
+            clientId: CLIENT_NAME,
             region: REGION
         }).start()
     } catch (e) {
