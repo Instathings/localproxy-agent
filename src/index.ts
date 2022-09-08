@@ -79,8 +79,8 @@ class AwsLocalProxySpawner {
             ],
                 { env: process.env }
             )
-            this.child.stderr.on('data', data => console.error(data))
-            this.child.stdout.on('data', data => console.log(data))
+            this.child.stderr.on('data', data => console.error(data.toString()))
+            this.child.stdout.on('data', data => console.log(data.toString()))
             this.child.on('exit', code => {
                 console[code === 0 ? "log" : "error"]("localproxy exited with code", code);
                 this.child = null;
